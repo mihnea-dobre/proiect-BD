@@ -1,0 +1,169 @@
+CREATE OR REPLACE VIEW VW_REZERVARI_DETALII AS
+SELECT r.id_rezervare,
+       r.data_inceput,
+       r.data_sfarsit,
+       r.status,
+       u.nume AS nume_user,
+       u.email,
+       m.nr_matricol,
+       l.nr_loc,
+       l.disponibil,
+       z.id_zona,
+       z.tarif_ora
+FROM REZERVARE r
+JOIN MASINA m ON r.id_masina = m.id_masina
+JOIN USERS u ON m.id_user = u.id_user
+JOIN LOC_PARCARE l ON r.id_loc = l.id_loc
+JOIN ZONA_PARCARE z ON l.id_zona = z.id_zona;
+
+ROLLBACK;
+
+/* Operatie LMD permisa 
+Putem schimba statusul direct prin view doarece coloana status previne direct din REZERVARE. */
+
+UPDATE VW_REZERVARI_DETALII
+SET status = 'Anulata'
+WHERE id_rezervare = 1;
+
+/* Operatie LMD nepermisa 
+Nu putem insera direct prin view, deoarece ORACLE nu permite inserarea pe
+un view complex cu coloane din mai multe tabele simultan.
+*/
+
+INSERT INTO VW_REZERVARI_DETALII
+  (id_rezervare, data_inceput, data_sfarsit, status,
+   nume_user, email, nr_matricol, nr_loc, id_zona)
+VALUES
+  (99, SYSTIMESTAMP, SYSTIMESTAMP + INTERVAL '1' HOUR, 'Activa',
+   'Test', 'test@email.com', 'B99ZZZ', 'A-01', 1);
+-- Eroare: "cannot modify more than one base table through a join view"
+
+--1. Outer-join pe minim 4 tabele
+--Cerinta: Afisati toti utilizatorii si, pentru fiecare, rezervarile active (daca exista), 
+--impreuna cu masina si locul de parcare.
+--Utilizatorii fara masina sau fara rezervari active vor aparea cu valori nule.
+
+select u.id_user,
+       u.nume,
+       u.email,
+       m.nr_matricol,
+       r.id_rezervare,
+       r.data_inceput,
+       r.data_sfarsit,
+       l.nr_loc
+from users u
+left join masina m on u.id_user = m.id_user 
+left join rezervare r on m.id_masina = r.id_masina and r.status = 'Activa'
+left join loc_parcare l on r.id_loc = l.id_loc 
+order by u.id_user;
+
+--2. Diviziune (cu NOT EXISTS)
+--Gasiti utilizatorii care au efectuat cel putin o rezervare
+--intr-un loc din *fiecare* zona de parcare existenta
+
+select u.id_user, u.nume
+from users u
+where not exists(
+    select z.id_zona
+    from zona_parcare z
+    where not exists(
+        select *
+        from masina m 
+        join rezervare r on m.id_masina = r.id_masina
+        join loc_parcare l on r.id_loc = l.id_loc 
+        where m.id_user = u.id_user and l.id_zona = z.id_zona 
+    )
+)
+order by u.id_user;
+
+--3. Analiza top-n
+--Determinati primii 3 utilizatori cu cel mai mare numar de rezervari.
+--In caz de egalitate, afisati toti cei care se califica in top 3. 
+
+select id_user, nume, numar_rezervari, pozitie
+from(
+    select u.id_user, u.nume,
+           count(r.id_rezervare) as numar_rezervari,
+           rank() over (order by count(r.id_rezervare) desc) as pozitie
+    from users u
+    left join masina m on u.id_user = m.id_user 
+    left join rezervare r on m.id_masina = r.id_masina 
+    group by u.id_user, u.nume
+) where pozitie <= 3
+order by pozitie;
+
+--Interogare: Afisati utilizatorii cu rezervari active in locuri de parcare
+--disponibile.
+
+
+--SQL initial, neoptimizat
+SELECT u.nume, m.nr_matricol, r.data_inceput
+FROM USERS u, MASINA m, REZERVARE r, LOC_PARCARE l
+WHERE u.id_user = m.id_user
+  AND m.id_masina = r.id_masina
+  AND r.id_loc = l.id_loc
+  AND r.status = 'Activa'
+  AND l.disponibil = 1;
+
+
+/* Expresia algebrica initiala:
+π nume, nr_matricol, data_inceput (
+  σ status='Activa' ∧ disponibil=1 (
+    USERS ⋈ MASINA ⋈ REZERVARE ⋈ LOC_PARCARE
+  )
+)
+*/
+
+/* Arbore algebric initial
+         π
+         |
+         σ
+         |
+         ⋈
+       /   \
+     ⋈     LOC_PARCARE
+    /  \
+  ⋈    REZERVARE
+ /  \
+USERS MASINA
+*/
+
+--Cum putem optimiza?
+--Coboram selectiile σ (where) status = 'Activa' si σ disponibil=1 pe
+--REZERVARE, respectiv LOC_PARCARE
+--Reordonam joinurile, incepand cu tabelele reduse de selectii
+
+/* Expresie algebrica optimizata
+π nume, nr_matricol, data_inceput (
+  (σ disponibil=1 LOC_PARCARE)
+  ⋈ (σ status='Activa' REZERVARE)
+  ⋈ MASINA
+  ⋈ USERS
+)
+*/
+
+/* Arbore algebric optimizat
+       π
+       |
+       ⋈
+     /   \
+    ⋈    USERS
+   /  \
+  ⋈   MASINA
+ /  \
+σ     σ
+|     |
+LOC   REZERVARE
+*/
+
+
+-- SQL optimizat
+SELECT u.nume, m.nr_matricol, r.data_inceput
+FROM (SELECT * FROM LOC_PARCARE WHERE disponibil = 1) l
+JOIN (SELECT * FROM REZERVARE WHERE status = 'Activa') r ON l.id_loc = r.id_loc
+JOIN MASINA m ON r.id_masina = m.id_masina
+JOIN USERS u ON m.id_user = u.id_user;
+
+-- Nu avem foarte multe date, totusi se observa ca interogarile difera prin viteza
+-- cu ~0.017 secunde.
+

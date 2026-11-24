@@ -39,4 +39,3 @@ where id_user in (
     )
 );
 
-ROLLBACK;

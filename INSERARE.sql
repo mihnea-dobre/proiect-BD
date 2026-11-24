@@ -20,7 +20,8 @@ delete from LOC_PARCARE;
 delete from ZONA_PARCARE;
 
 create sequence parcare_seq
-start with 100 increment by 1;
+start with 100 increment by 1
+nocache;
 
 
 INSERT INTO USERS (id_user, nume, email, username) VALUES (parcare_seq.NEXTVAL, 'ANDREI IONESCU', 'andrei@email.com', 'andrei_i');
@@ -28,6 +29,7 @@ INSERT INTO USERS (id_user, nume, email, username) VALUES (parcare_seq.NEXTVAL, 
 INSERT INTO USERS (id_user, nume, email, username) VALUES (parcare_seq.NEXTVAL, 'MIHAI DAN', 'mihai@email.com', 'mihai_d');
 INSERT INTO USERS (id_user, nume, email, username) VALUES (parcare_seq.NEXTVAL, 'IOANA STAN', 'ioana@email.com', 'ioana_s');
 INSERT INTO USERS (id_user, nume, email, username) VALUES (parcare_seq.NEXTVAL, 'CRISTI VLAD', 'cristi@email.com', 'cristi_v');
+INSERT INTO USERS (id_user, nume, email, username) VALUES (parcare_seq.NEXTVAL, 'BLAGA LUCIAN', 'corona@email.com', 'blaga_l');
 
 INSERT INTO MUNICIPIU VALUES (1, 'Bucuresti', 'B', 'RO123');
 INSERT INTO MUNICIPIU VALUES (2, 'Cluj-Napoca', 'CJ', 'RO456');
@@ -76,7 +78,8 @@ INSERT INTO LOC_PARCARE VALUES (6, 'F-03', 1, 1);
 INSERT INTO LOC_SUBTERAN VALUES (6, -2);
 INSERT INTO LOC_PARCARE VALUES (7, 'G-01', 1, 2);
 INSERT INTO LOC_ELECTRIC VALUES (7, 40);
-
+INSERT INTO LOC_PARCARE VALUES (8, 'F-12', 1, 3);
+INSERT INTO LOC_PLATIT VALUES (8, 15.50);
 
 INSERT INTO SPATIU_PARCARE VALUES (1, 1);
 INSERT INTO SPATIU_PARCARE VALUES (1, 2);
@@ -103,6 +106,20 @@ VALUES (4, TO_TIMESTAMP('2025-11-02 08:00:00', 'YYYY-MM-DD HH24:MI:SS'),
 TO_TIMESTAMP('2025-11-02 18:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Finalizata', 4, 4);
 INSERT INTO REZERVARE (id_rezervare, data_inceput, data_sfarsit, status, id_masina, id_loc)
 VALUES (5, CURRENT_TIMESTAMP + INTERVAL '5' HOUR, CURRENT_TIMESTAMP + INTERVAL '7' HOUR, 'Activa', 5, 5);
+INSERT INTO REZERVARE (id_rezervare, data_inceput, data_sfarsit, status, id_masina, id_loc)
+VALUES (parcare_seq.NEXTVAL, CURRENT_TIMESTAMP + INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '1' DAY + INTERVAL '2' HOUR, 'Activa', 1, 2);  
+INSERT INTO REZERVARE (id_rezervare, data_inceput, data_sfarsit, status, id_masina, id_loc)
+VALUES (parcare_seq.NEXTVAL, CURRENT_TIMESTAMP + INTERVAL '2' DAY, CURRENT_TIMESTAMP + INTERVAL '2' DAY + INTERVAL '2' HOUR, 'Activa', 1, 8);  
+INSERT INTO REZERVARE (id_rezervare, data_inceput, data_sfarsit, status, id_masina, id_loc)
+VALUES (parcare_seq.NEXTVAL, CURRENT_TIMESTAMP + INTERVAL '3' DAY, CURRENT_TIMESTAMP + INTERVAL '3' DAY + INTERVAL '2' HOUR, 'Activa', 1, 3);  
+INSERT INTO REZERVARE (id_rezervare, data_inceput, data_sfarsit, status, id_masina, id_loc)
+VALUES (parcare_seq.NEXTVAL, CURRENT_TIMESTAMP + INTERVAL '4' DAY, CURRENT_TIMESTAMP + INTERVAL '4' DAY + INTERVAL '2' HOUR, 'Activa', 1, 5);  
+INSERT INTO REZERVARE (id_rezervare, data_inceput, data_sfarsit, status, id_masina, id_loc)
+VALUES (parcare_seq.NEXTVAL, CURRENT_TIMESTAMP + INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '1' DAY + INTERVAL '3' HOUR, 'Activa', 2, 4); 
+INSERT INTO REZERVARE (id_rezervare, data_inceput, data_sfarsit, status, id_masina, id_loc)
+VALUES (parcare_seq.NEXTVAL, CURRENT_TIMESTAMP + INTERVAL '2' DAY, CURRENT_TIMESTAMP + INTERVAL '2' DAY + INTERVAL '1' HOUR, 'Activa', 2, 3);   
+INSERT INTO REZERVARE (id_rezervare, data_inceput, data_sfarsit, status, id_masina, id_loc)
+VALUES (parcare_seq.NEXTVAL, CURRENT_TIMESTAMP + INTERVAL '1' DAY, CURRENT_TIMESTAMP + INTERVAL '1' DAY + INTERVAL '2' HOUR, 'Activa', 3, 5);
 
 INSERT INTO ABONAMENT VALUES (parcare_seq.NEXTVAL, 'LUNAR', 150.00, SYSDATE, SYSDATE + 30, 100);
 INSERT INTO ABONAMENT VALUES (parcare_seq.NEXTVAL, 'ANUAL', 1200.00, SYSDATE - 10, SYSDATE + 355, 101);

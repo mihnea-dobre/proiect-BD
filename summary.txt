@@ -1,0 +1,13 @@
+14. Creat un view complex pentru detaliile unei rezervari, afisat si justificat o operatie LMD permisa respectiv nepermisa.
+
+15. Un outer-join pe 4 tabele, diviziune cu NOT EXISTS, top-n (include si RANK())
+
+16. Ales (a), am optimizat o cerere, traducand in algebra relationala si afisand arborele algebric atat pentru interogarea initiala cat si cea optimizata.
+
+17. Dat exemple de normalizare BCNF, FN4, FN5. Denormalizat cu date redundante care sunt apoi controlate printr-un trigger (cu ex20 inseamna ca proiectul are 10 triggere).
+
+18. Am folosit doua sesiuni T1 si T2 care actioneaza in paralel pe baza de date pentru a demonstra diferenta intre READ COMMITTED si SERIALIZABLE prin fenomenele Dirty Read, Non-Repeatable Read si Phantom Read.
+
+19. Nu am acoperit.
+
+20. Am completat triggere pentru fiecare constrangere care a fost mentionata atunci cand am trimis 1-13 dar nu a fost abordata, sunt 9 triggere in total.

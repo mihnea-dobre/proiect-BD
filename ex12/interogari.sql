@@ -73,14 +73,20 @@ order by capacitate_totala DESC;
 --Listati rezervarile cu data formatata (TO_CHAR), status decodificat (DECODE), 
 --o coloana concatenata (nr_matricol si status) si 
 --perioada (ultima luna / mai vechi) folosind ADD_MONTHS si CASE.
-select r.id_rezervare, r.data_inceput,
-decode (r.status, 'Activa', 'In desfasurare', 'Finalizata', 'Incheiata', 'Anulata', 'Anulata', 'Necunoscut') as status_descriere,
-concat(concat(m.nr_matricol, ' - '),r.status) as masina_status,
-to_char(r.data_inceput, 'DD-MON-YYYY HH24:MI') as inceput_format,
-case when r.data_inceput >= add_months(sysdate, -1)
-then 'Ultima luna'
-else 'Mai vechi'
-end as perioada
+select r.id_rezervare,
+       to_char(r.data_inceput, 'DD-MON-YYYY HH24:MI') as inceput_formatat,
+       decode(r.status,
+              'Activa', 'In desfasurare',
+              'Finalizata', 'Incheiata',
+              'Anulata', 'Anulata',
+              'Necunoscut') as status_descriere,
+       concat(concat(m.nr_matricol, ' - '), r.status) as masina_status,
+       case when r.data_inceput >= add_months(sysdate, -1)
+            then 'Ultima luna'
+            else 'Mai vechi'
+       end as perioada,
+       nvl(p.metoda, 'N/A') as metoda_plata
 from rezervare r
 join masina m on r.id_masina = m.id_masina
+left join plata p on r.id_rezervare = p.id_rezervare
 order by r.data_inceput desc;
